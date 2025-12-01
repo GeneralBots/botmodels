@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -55,3 +55,61 @@ class SpeechToTextResponse(BaseModel):
     text: str
     language: Optional[str] = None
     confidence: Optional[float] = None
+
+
+class QRCodeInfo(BaseModel):
+    """Information about a single QR code found in an image"""
+
+    data: str = Field(..., description="The decoded data from the QR code")
+    type: str = Field(..., description="The type of code (QRCODE, BARCODE, etc.)")
+    rect: Optional[Dict[str, int]] = Field(
+        None, description="Bounding rectangle {left, top, width, height}"
+    )
+    polygon: Optional[List[Dict[str, int]]] = Field(
+        None, description="Polygon points [{x, y}, ...]"
+    )
+
+
+class QRCodeResponse(BaseModel):
+    """Response from QR code reading endpoint"""
+
+    success: bool = Field(..., description="Whether the operation was successful")
+    data: Optional[str] = Field(
+        None, description="The primary QR code data (first found)"
+    )
+    codes: List[Dict[str, Any]] = Field(
+        default_factory=list, description="All QR codes found in the image"
+    )
+    count: int = Field(0, description="Number of QR codes found")
+    error: Optional[str] = Field(None, description="Error message if any")
+
+
+class BarcodeResponse(BaseModel):
+    """Response from barcode reading endpoint"""
+
+    success: bool
+    barcodes: List[Dict[str, Any]] = Field(default_factory=list)
+    count: int = 0
+    error: Optional[str] = None
+
+
+class OCRResponse(BaseModel):
+    """Response from OCR text extraction endpoint"""
+
+    success: bool
+    text: str = ""
+    confidence: float = 0.0
+    language: str = "eng"
+    word_count: int = 0
+    error: Optional[str] = None
+
+
+class ImageAnalysisResponse(BaseModel):
+    """Comprehensive image analysis response"""
+
+    success: bool
+    description: Optional[str] = None
+    text: Optional[str] = None
+    codes: List[Dict[str, Any]] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    error: Optional[str] = None
