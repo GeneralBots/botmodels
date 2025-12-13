@@ -162,11 +162,11 @@ question: "How many people are in this image?"
 GET /api/health
 ```
 
-## Integration with BotServer
+## Integration with botserver
 
 BotModels integrates with botserver through HTTPS, providing multimodal capabilities to BASIC scripts.
 
-### BotServer Configuration (config.csv)
+### botserver Configuration (config.csv)
 
 ```csv
 key,value
