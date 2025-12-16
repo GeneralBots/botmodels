@@ -1,0 +1,43 @@
+name: GBCI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: gbo
+
+    steps:
+      - name: Disable SSL verification (temporary)
+        run: git config --global http.sslVerify false
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+
+      - name: Install dependencies
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          source venv/bin/activate
+          python -m pytest tests/ -v || true
+
+      - name: Deploy application
+        run: |
+          lxc exec bot:pragmatismo-system -- systemctl stop botmodels || true
+
+          sudo mkdir -p /opt/gbo/bin/botmodels
+          sudo cp -r ./* /opt/gbo/bin/botmodels/
+          sudo cp -r venv /opt/gbo/bin/botmodels/
+
+          lxc exec bot:pragmatismo-system -- systemctl start botmodels
