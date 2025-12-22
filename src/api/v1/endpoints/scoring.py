@@ -27,11 +27,6 @@ logger = get_logger("scoring")
 router = APIRouter(prefix="/scoring", tags=["Lead Scoring"])
 
 
-# ============================================================================
-# Request/Response Models
-# ============================================================================
-
-
 class LeadProfile(BaseModel):
     """Lead profile information for scoring"""
 
@@ -118,42 +113,31 @@ class ModelInfoResponse(BaseModel):
     accuracy_metrics: Dict[str, float]
 
 
-# ============================================================================
-# Scoring Configuration
-# ============================================================================
-
-
 class ScoringWeights:
     """Default weights for scoring components"""
 
-    # Demographic factors
     COMPANY_SIZE_WEIGHT = 10.0
     INDUSTRY_MATCH_WEIGHT = 15.0
     LOCATION_MATCH_WEIGHT = 5.0
     JOB_TITLE_WEIGHT = 15.0
 
-    # Behavioral factors
     EMAIL_OPENS_WEIGHT = 5.0
     EMAIL_CLICKS_WEIGHT = 10.0
     PAGE_VISITS_WEIGHT = 5.0
     FORM_SUBMISSIONS_WEIGHT = 15.0
     CONTENT_DOWNLOADS_WEIGHT = 10.0
 
-    # Engagement factors
     RESPONSE_TIME_WEIGHT = 10.0
     INTERACTION_FREQUENCY_WEIGHT = 10.0
     SESSION_DURATION_WEIGHT = 5.0
 
-    # Intent signals
     PRICING_PAGE_WEIGHT = 20.0
     DEMO_REQUEST_WEIGHT = 25.0
     TRIAL_SIGNUP_WEIGHT = 30.0
 
-    # Penalties
     INACTIVITY_PENALTY = -15.0
 
 
-# Target industries and titles for scoring
 TARGET_INDUSTRIES = {
     "technology": 1.0,
     "software": 1.0,
@@ -202,17 +186,11 @@ COMPANY_SIZE_SCORES = {
 }
 
 
-# ============================================================================
-# Scoring Logic
-# ============================================================================
-
-
 def calculate_demographic_score(profile: LeadProfile) -> float:
     """Calculate demographic component of lead score"""
     score = 0.0
     weights = ScoringWeights()
 
-    # Company size scoring
     if profile.company_size:
         size_lower = profile.company_size.lower()
         for key, value in COMPANY_SIZE_SCORES.items():
@@ -222,7 +200,6 @@ def calculate_demographic_score(profile: LeadProfile) -> float:
         else:
             score += 0.3 * weights.COMPANY_SIZE_WEIGHT
 
-    # Industry scoring
     if profile.industry:
         industry_lower = profile.industry.lower()
         for key, value in TARGET_INDUSTRIES.items():
@@ -232,16 +209,14 @@ def calculate_demographic_score(profile: LeadProfile) -> float:
         else:
             score += 0.4 * weights.INDUSTRY_MATCH_WEIGHT
 
-    # Job title scoring
     if profile.job_title:
         title_lower = profile.job_title.lower()
-        title_score = 0.3  # default
+        title_score = 0.3
         for key, value in TITLE_SCORES.items():
             if key in title_lower:
                 title_score = max(title_score, value)
         score += title_score * weights.JOB_TITLE_WEIGHT
 
-    # Location scoring (simplified)
     if profile.location:
         score += 0.5 * weights.LOCATION_MATCH_WEIGHT
 
@@ -253,22 +228,18 @@ def calculate_behavioral_score(behavior: LeadBehavior) -> float:
     score = 0.0
     weights = ScoringWeights()
 
-    # Email engagement
     email_open_score = min(behavior.email_opens / 10.0, 1.0)
     score += email_open_score * weights.EMAIL_OPENS_WEIGHT
 
     email_click_score = min(behavior.email_clicks / 5.0, 1.0)
     score += email_click_score * weights.EMAIL_CLICKS_WEIGHT
 
-    # Page visits
     visit_score = min(behavior.page_visits / 20.0, 1.0)
     score += visit_score * weights.PAGE_VISITS_WEIGHT
 
-    # Form submissions
     form_score = min(behavior.form_submissions / 3.0, 1.0)
     score += form_score * weights.FORM_SUBMISSIONS_WEIGHT
 
-    # Content downloads
     download_score = min(behavior.content_downloads / 5.0, 1.0)
     score += download_score * weights.CONTENT_DOWNLOADS_WEIGHT
 
@@ -280,15 +251,12 @@ def calculate_engagement_score(behavior: LeadBehavior) -> float:
     score = 0.0
     weights = ScoringWeights()
 
-    # Interaction frequency
     frequency_score = min(behavior.total_sessions / 10.0, 1.0)
     score += frequency_score * weights.INTERACTION_FREQUENCY_WEIGHT
 
-    # Session duration (5 min = max score)
     duration_score = min(behavior.avg_session_duration / 300.0, 1.0)
     score += duration_score * weights.SESSION_DURATION_WEIGHT
 
-    # Recency scoring
     if behavior.days_since_last_activity is not None:
         days = behavior.days_since_last_activity
         if days <= 1:
@@ -313,16 +281,13 @@ def calculate_intent_score(behavior: LeadBehavior) -> float:
     score = 0.0
     weights = ScoringWeights()
 
-    # Pricing page visits
     if behavior.pricing_page_visits > 0:
         pricing_score = min(behavior.pricing_page_visits / 3.0, 1.0)
         score += pricing_score * weights.PRICING_PAGE_WEIGHT
 
-    # Demo requests
     if behavior.demo_requests > 0:
         score += weights.DEMO_REQUEST_WEIGHT
 
-    # Trial signups
     if behavior.trial_signups > 0:
         score += weights.TRIAL_SIGNUP_WEIGHT
 
@@ -334,7 +299,6 @@ def calculate_penalty_score(behavior: LeadBehavior) -> float:
     penalty = 0.0
     weights = ScoringWeights()
 
-    # Inactivity penalty
     if behavior.days_since_last_activity is not None:
         if behavior.days_since_last_activity > 60:
             penalty += weights.INACTIVITY_PENALTY
@@ -365,9 +329,9 @@ def get_qualification_status(
 ) -> str:
     """Determine qualification status"""
     if has_trial or score >= 90:
-        return "sql"  # Sales Qualified Lead
+        return "sql"
     elif has_demo or score >= 70:
-        return "mql"  # Marketing Qualified Lead
+        return "mql"
     else:
         return "unqualified"
 
@@ -378,7 +342,6 @@ def generate_recommendations(
     """Generate actionable recommendations for the lead"""
     recommendations = []
 
-    # Score-based recommendations
     if score >= 80:
         recommendations.append("Hot lead! Prioritize immediate sales outreach.")
     elif score >= 60:
@@ -388,7 +351,6 @@ def generate_recommendations(
     else:
         recommendations.append("Low priority - add to nurturing campaign.")
 
-    # Behavior-based recommendations
     if behavior.pricing_page_visits > 0 and behavior.demo_requests == 0:
         recommendations.append("Visited pricing page - send personalized demo invite.")
 
@@ -400,14 +362,12 @@ def generate_recommendations(
     if behavior.email_opens > 5 and behavior.email_clicks < 2:
         recommendations.append("Opens emails but doesn't click - try different CTAs.")
 
-    # Profile-based recommendations
     if not profile.company:
         recommendations.append("Missing company info - enrich profile data.")
 
     if not profile.job_title:
         recommendations.append("Unknown job title - request more information.")
 
-    # Engagement recommendations
     if behavior.days_since_last_activity and behavior.days_since_last_activity > 14:
         recommendations.append("Inactive for 2+ weeks - send re-engagement email.")
 
@@ -419,14 +379,12 @@ def score_lead(request: ScoreLeadRequest) -> LeadScoreResponse:
     profile = request.profile
     behavior = request.behavior or LeadBehavior()
 
-    # Calculate component scores
     demographic_score = calculate_demographic_score(profile)
     behavioral_score = calculate_behavioral_score(behavior)
     engagement_score = calculate_engagement_score(behavior)
     intent_score = calculate_intent_score(behavior)
     penalty_score = calculate_penalty_score(behavior)
 
-    # Calculate total score
     raw_score = (
         demographic_score
         + behavioral_score
@@ -436,7 +394,6 @@ def score_lead(request: ScoreLeadRequest) -> LeadScoreResponse:
     )
     total_score = max(0, min(100, raw_score))
 
-    # Determine grade and status
     grade = get_grade(total_score)
     qualification_status = get_qualification_status(
         total_score,
@@ -444,12 +401,10 @@ def score_lead(request: ScoreLeadRequest) -> LeadScoreResponse:
         has_trial=behavior.trial_signups > 0,
     )
 
-    # Generate recommendations
     recommendations = []
     if request.include_recommendations:
         recommendations = generate_recommendations(profile, behavior, total_score)
 
-    # Calculate confidence based on data completeness
     data_points = sum(
         [
             1 if profile.email else 0,
@@ -480,11 +435,6 @@ def score_lead(request: ScoreLeadRequest) -> LeadScoreResponse:
         confidence=round(confidence, 2),
         calculated_at=datetime.utcnow(),
     )
-
-
-# ============================================================================
-# API Endpoints
-# ============================================================================
 
 
 @router.post("/score", response_model=LeadScoreResponse)
@@ -551,7 +501,6 @@ async def batch_score_leads(
 
         scores = [score_lead(lead_request) for lead_request in request.leads]
 
-        # Calculate statistics
         total_score = sum(s.total_score for s in scores)
         avg_score = total_score / len(scores) if scores else 0
 
