@@ -65,11 +65,11 @@ async def root():
             "status": "running",
             "docs": "/api/docs",
             "endpoints": {
-                "image": "/api/v1/image",
-                "video": "/api/v1/video",
-                "speech": "/api/v1/speech",
-                "vision": "/api/v1/vision",
-                "scoring": "/api/v1/scoring",
+                "image": "/api/image",
+                "video": "/api/video",
+                "speech": "/api/speech",
+                "vision": "/api/vision",
+                "scoring": "/api/scoring",
             },
         }
     )
