@@ -1,8 +1,19 @@
-# BotModels
+# BotModels - AI Inference Service
 
-A multimodal AI service for General Bots providing image, video, audio generation, and vision/captioning capabilities. Works as a companion service to botserver, similar to how llama.cpp provides LLM capabilities.
+**Version:** 1.0.0  
+**Purpose:** Multimodal AI inference service for General Bots
 
-![General Bots Models Services](https://raw.githubusercontent.com/GeneralBots/BotModels/master/BotModels.png)
+---
+
+## Overview
+
+BotModels is a Python-based AI inference service that provides multimodal capabilities to the General Bots platform. It serves as a companion to botserver (Rust), specializing in cutting-edge AI/ML models from the Python ecosystem including image generation, video creation, speech synthesis, and vision/captioning.
+
+While botserver handles business logic, networking, and systems-level operations, BotModels exists solely to leverage the extensive Python AI/ML ecosystem for inference tasks that are impractical to implement in Rust.
+
+For comprehensive documentation, see **[docs.pragmatismo.com.br](https://docs.pragmatismo.com.br)** or the **[BotBook](../botbook)** for detailed guides, API references, and tutorials.
+
+---
 
 ## Features
 
@@ -11,6 +22,8 @@ A multimodal AI service for General Bots providing image, video, audio generatio
 - **Speech Synthesis**: Text-to-speech using Coqui TTS
 - **Speech Recognition**: Audio transcription using OpenAI Whisper
 - **Vision/Captioning**: Image and video description using BLIP2
+
+---
 
 ## Quick Start
 
@@ -63,7 +76,34 @@ python -m uvicorn src.main:app --host 0.0.0.0 --port 8085 --workers 4
 python -m uvicorn src.main:app --host 0.0.0.0 --port 8085 --ssl-keyfile key.pem --ssl-certfile cert.pem
 ```
 
-## API Endpoints
+---
+
+## 🐍 Philosophy & Scope
+
+### Why Python?
+
+- **Rust vs. Python Rule**:
+  - If logic is deterministic, systems-level, or performance-critical: **Do it in Rust (botserver)**
+  - If logic requires cutting-edge ML models, rapid experimentation with HuggingFace, or specific Python-only libraries: **Do it here**
+
+### Architecture Principles
+
+- **Inference Only**: This service should NOT hold business state. It accepts inputs, runs inference, and returns predictions.
+- **Stateless**: Treated as a sidecar to `botserver`.
+- **API First**: Exposes strict HTTP/REST endpoints consumed by `botserver`.
+
+---
+
+## 🛠 Technology Stack
+
+- **Runtime**: Python 3.10+
+- **Web Framework**: FastAPI (preferred over Flask for async/performance)
+- **ML Frameworks**: PyTorch, HuggingFace Transformers, Diffusers
+- **Quality**: `ruff` (linting), `black` (formatting), `mypy` (typing)
+
+---
+
+## 📡 API Endpoints
 
 All endpoints require the `X-API-Key` header for authentication.
 
@@ -162,11 +202,15 @@ question: "How many people are in this image?"
 GET /api/health
 ```
 
-## Integration with botserver
+Interactive API documentation:
+- Swagger UI: `http://localhost:8085/api/docs`
+- ReDoc: `http://localhost:8085/api/redoc`
 
-BotModels integrates with botserver through HTTPS, providing multimodal capabilities to BASIC scripts.
+---
 
-### botserver Configuration (config.csv)
+## 🔗 Integration with BotServer
+
+### Configuration (config.csv)
 
 ```csv
 key,value
@@ -186,8 +230,6 @@ video-generator-fps,8
 
 ### BASIC Script Keywords
 
-Once configured, these keywords are available in BASIC:
-
 ```basic
 // Generate an image
 file = IMAGE "a beautiful sunset over mountains"
@@ -206,7 +248,9 @@ caption = SEE "/path/to/image.jpg"
 TALK caption
 ```
 
-## Architecture
+---
+
+## 🏗️ Architecture
 
 ```
 ┌─────────────┐     HTTPS      ┌─────────────┐
@@ -226,29 +270,24 @@ TALK caption
 └─────────────┘                └─────────────┘
 ```
 
-## Model Downloads
+---
 
-Models are downloaded automatically on first use, or you can pre-download them:
+## ⚡️ Development Guidelines
 
-```bash
-# Stable Diffusion
-python -c "from diffusers import StableDiffusionPipeline; StableDiffusionPipeline.from_pretrained('runwayml/stable-diffusion-v1-5')"
+### Modern Model Usage
 
-# BLIP2 (Vision)
-python -c "from transformers import Blip2Processor, Blip2ForConditionalGeneration; Blip2Processor.from_pretrained('Salesforce/blip2-opt-2.7b'); Blip2ForConditionalGeneration.from_pretrained('Salesforce/blip2-opt-2.7b')"
+- **Deprecate Legacy**: Move away from outdated libs (e.g., old `allennlp`) in favor of **HuggingFace Transformers** and **Diffusers**
+- **Quantization**: Always consider quantized models (bitsandbytes, GGUF) to reduce VRAM usage
 
-# Whisper (Speech-to-Text)
-python -c "import whisper; whisper.load_model('base')"
-```
+### Performance & Loading
 
-## API Documentation
+- **Lazy Loading**: Do NOT load 10GB models at module import time. Load on startup lifecycle or first request with locking
+- **GPU Handling**: Robustly detect CUDA/MPS (Mac) and fallback to CPU gracefully
 
-Interactive API documentation is available at:
+### Code Quality
 
-- Swagger UI: `http://localhost:8085/api/docs`
-- ReDoc: `http://localhost:8085/api/redoc`
-
-## Development
+- **Type Hints**: All functions MUST have type hints
+- **Error Handling**: No bare `except:`. Catch precise exceptions and return structured JSON errors to `botserver`
 
 ### Project Structure
 
@@ -281,13 +320,17 @@ botmodels/
 └── README.md
 ```
 
-### Running Tests
+---
+
+## 🧪 Testing
 
 ```bash
 pytest tests/
 ```
 
-## Security Notes
+---
+
+## 🔒 Security
 
 1. **Always use HTTPS in production**
 2. Use strong, unique API keys
@@ -295,13 +338,27 @@ pytest tests/
 4. Consider running on a separate GPU server
 5. Monitor resource usage and set appropriate limits
 
-## Requirements
+---
+
+## 📚 Documentation
+
+For complete documentation, guides, and API references:
+
+- **[docs.pragmatismo.com.br](https://docs.pragmatismo.com.br)** - Full online documentation
+- **[BotBook](../botbook)** - Local comprehensive guide with tutorials and examples
+- **[General Bots Repository](https://github.com/GeneralBots/BotServer)** - Main project repository
+
+---
+
+## 📦 Requirements
 
 - Python 3.10+
 - CUDA-capable GPU (recommended, 8GB+ VRAM)
 - 16GB+ RAM
 
-## Resources
+---
+
+## 🔗 Resources
 
 ### Education
 
@@ -321,6 +378,20 @@ pytest tests/
 - [AI for Mankind](https://github.com/aiformankind)
 - [ManaAI](https://manaai.cn/)
 
-## License
+---
+
+## 🔑 Remember
+
+- **Inference Only**: No business state, just predictions
+- **Modern Models**: Use HuggingFace Transformers, Diffusers
+- **Type Safety**: All functions must have type hints
+- **Lazy Loading**: Don't load models at import time
+- **GPU Detection**: Graceful fallback to CPU
+- **Version 1.0.0** - Do not change without approval
+- **GIT WORKFLOW** - ALWAYS push to ALL repositories (github, pragmatismo)
+
+---
+
+## 📄 License
 
 See LICENSE file for details.
