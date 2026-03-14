@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -19,6 +20,10 @@ class Settings(BaseSettings):
     project_name: str = "BotModels API"
     version: str = "2.0.0"
     api_key: str = "change-me"
+
+    # External Providers for Speech (Optional)
+    groq_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
 
     # Image generation model
     image_model_path: str = "./models/stable-diffusion-v1-5"
@@ -45,6 +50,9 @@ class Settings(BaseSettings):
 
     # Whisper model for speech-to-text
     whisper_model_path: str = "./models/whisper"
+
+    # Real-time Audio model for speech-to-speech
+    realtime_audio_model_path: str = "./models/realtime_audio"
 
     # Device configuration
     device: str = "cuda"

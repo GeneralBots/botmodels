@@ -6,6 +6,7 @@ from ....schemas.generation import (
     SpeechToTextResponse,
 )
 from ....services.speech_service import get_speech_service
+from ....services.realtime_audio_service import get_realtime_audio_service
 from ...dependencies import verify_api_key
 
 router = APIRouter(prefix="/speech", tags=["Speech"])
@@ -82,4 +83,26 @@ async def detect_language(
     """
     audio_data = await file.read()
     result = await service.detect_language(audio_data)
+    return result
+
+
+@router.post("/realtime")
+async def realtime_audio(
+    file: UploadFile = File(...),
+    api_key: str = Depends(verify_api_key),
+    service=Depends(get_realtime_audio_service),
+):
+    """
+    Process audio using real-time speech-to-speech models.
+
+    Args:
+        file: Audio file to process
+        api_key: API key for authentication
+        service: Real-time Audio service instance
+
+    Returns:
+        dict with transcribed text and execution info
+    """
+    audio_data = await file.read()
+    result = await service.process_audio(audio_data)
     return result

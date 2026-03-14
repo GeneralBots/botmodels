@@ -1,3 +1,3 @@
-from . import image, scoring, speech, video, vision
+from . import image, scoring, speech, video
 
-__all__ = ["image", "video", "speech", "vision", "scoring"]
+__all__ = ["image", "video", "speech", "scoring"]
